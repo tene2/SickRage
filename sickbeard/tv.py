@@ -722,7 +722,7 @@ class TVShow(object):
                     with curEp.lock:
                         # only update status if tv shows is not already archived or ignored
                         # avoid endless redownloading of file because an SD file is in the way
-                        if(curEp.status not in Quality.ARCHIVED + Quality.IGNORED):
+                        if(curEp.status not in Quality.ARCHIVED ):
                             curEp.status = Quality.compositeStatus(DOWNLOADED, newQuality)
 
 
