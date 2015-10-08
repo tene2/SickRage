@@ -687,6 +687,7 @@ class TVShow(object):
 
                 with curEp.lock:
                     old_size = curEp.file_size
+                    old_location = curEp.location
                     curEp.location = file
                     # if the sizes are the same then it's probably the same file
                     if old_size and curEp.file_size == old_size:
@@ -711,11 +712,19 @@ class TVShow(object):
             # if they replace a file on me I'll make some attempt at re-checking the quality unless I know it's the same file
             if checkQualityAgain and not same_file:
                 newQuality = Quality.nameQuality(file, self.is_anime)
+                # check if a the current file exist and is better quality (in case of multiple file in the same directory)
+                # this will automatically keep the best quality
+                if os.path.isfile(old_location):
+                    newQuality = max(newQuality, Quality.nameQuality(old_location, self.is_anime))
+
                 logger.log(u"Since this file has been renamed, I checked " + file + " and found quality " +
                            Quality.qualityStrings[newQuality], logger.DEBUG)
                 if newQuality != Quality.UNKNOWN:
                     with curEp.lock:
-                        curEp.status = Quality.compositeStatus(DOWNLOADED, newQuality)
+                        # only update status if tv shows is not already archived or ignored
+                        # avoid endless redownloading of file because an SD file is in the way
+                        if(curEp.status not in Quality.ARCHIVED + Quality.IGNORED):
+                            curEp.status = Quality.compositeStatus(DOWNLOADED, newQuality)
 
 
             # check for status/quality changes as long as it's a new file
