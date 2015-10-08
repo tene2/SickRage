@@ -690,7 +690,7 @@ class TVShow(object):
                     old_location = curEp.location
                     curEp.location = file
                     # if the sizes are the same then it's probably the same file
-                    if old_size and curEp.file_size == old_size:
+                    if old_size and curEp.file_size == old_size and old_location == curEp.location:
                         same_file = True
                     else:
                         same_file = False
@@ -723,7 +723,7 @@ class TVShow(object):
                     with curEp.lock:
                         # only update status if tv shows is not already archived or ignored
                         # avoid endless redownloading of file because an SD file is in the way
-                        if(curEp.status not in Quality.ARCHIVED ):
+                        if(curEp.status not in Quality.ARCHIVED + [IGNORED]):
                             curEp.status = Quality.compositeStatus(DOWNLOADED, newQuality)
 
 
