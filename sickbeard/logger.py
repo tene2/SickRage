@@ -217,7 +217,7 @@ class Logger(object):
                 try:
                     title_Error = ss(str(curError.title))
                     if not len(title_Error) or title_Error == 'None':
-                        title_Error = re.match(r"^[A-Z0-9\-\[\] :]+::\s*(.*)$", ss(str(curError.message))).group(1)
+                        title_Error = re.match(r"^[A-Z0-9\-\[\] :]+::\s*(.*)$", ss(curError.message)).group(1)
 
                     if len(title_Error) > 1000:
                         title_Error = title_Error[0:1000]
