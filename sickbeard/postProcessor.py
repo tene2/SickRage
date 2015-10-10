@@ -1052,8 +1052,8 @@ class PostProcessor(object):
                 self._copy(self.file_path, dest_path, new_base_name, sickbeard.MOVE_ASSOCIATED_FILES,
                            sickbeard.USE_SUBTITLES and ep_obj.show.subtitles)
             elif self.process_method == "move":
-                if helpers.isFileLocked(self.file_path, True):
-                    raise EpisodePostProcessingFailedException("File is locked for reading/writing")
+          #      if helpers.isFileLocked(self.file_path, True):
+          #          raise EpisodePostProcessingFailedException("File is locked for reading/writing")
                 self._move(self.file_path, dest_path, new_base_name, sickbeard.MOVE_ASSOCIATED_FILES,
                            sickbeard.USE_SUBTITLES and ep_obj.show.subtitles)
             elif self.process_method == "hardlink":
