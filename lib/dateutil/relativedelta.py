@@ -56,7 +56,7 @@ The second one is passing it any number of the following keyword arguments::
     relativedelta(arg1=x,arg2=y,arg3=z...)
 
     year, month, day, hour, minute, second, microsecond:
-        Absolute information (argument is singular); adding or subtracting a
+        Absol ute information (argument is singular); adding or subtracting a
         relativedelta with absolute information does not perform an aritmetic
         operation, but rather REPLACES the corresponding value in the
         original datetime with the value(s) in relativedelta.
