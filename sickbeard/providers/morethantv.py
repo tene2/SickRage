@@ -46,7 +46,7 @@ class MoreThanTVProvider(generic.TorrentProvider):
         self.ratio = None
         self.minseed = None
         self.minleech = None
-        self.freeleech = False
+        # self.freeleech = False
 
         self.urls = {'base_url': 'https://www.morethan.tv/',
                      'login': 'https://www.morethan.tv/login.php',
@@ -61,9 +61,6 @@ class MoreThanTVProvider(generic.TorrentProvider):
         self.proper_strings = ['PROPER', 'REPACK']
 
         self.cache = MoreThanTVCache(self)
-
-    def isEnabled(self):
-        return self.enabled
 
     def _checkAuth(self):
 
@@ -81,7 +78,8 @@ class MoreThanTVProvider(generic.TorrentProvider):
         else:
             login_params = {'username': self.username,
                             'password': self.password,
-                            'login': 'submit'}
+                            'login': 'Log in',
+                            'keeplogged': '1'}
 
             response = self.getURL(self.urls['login'], post_data=login_params, timeout=30)
             if not response:
@@ -99,7 +97,7 @@ class MoreThanTVProvider(generic.TorrentProvider):
         results = []
         items = {'Season': [], 'Episode': [], 'RSS': []}
 
-        freeleech = '3' if self.freeleech else '0'
+        # freeleech = '3' if self.freeleech else '0'
 
         if not self._doLogin():
             return results
@@ -108,7 +106,7 @@ class MoreThanTVProvider(generic.TorrentProvider):
             logger.log(u"Search Mode: %s" % mode, logger.DEBUG)
             for search_string in search_params[mode]:
 
-                if mode != 'RSS':
+                if mode is not 'RSS':
                     logger.log(u"Search string: %s " % search_string, logger.DEBUG)
 
                 searchURL = self.urls['search'] % (search_string.replace('(', '').replace(')', ''))
@@ -124,7 +122,7 @@ class MoreThanTVProvider(generic.TorrentProvider):
                         torrent_table = html.find('table', attrs={'class': 'torrent_table'})
                         torrent_rows = torrent_table.findChildren('tr') if torrent_table else []
 
-                        #Continue only if one Release is found
+                        # Continue only if one Release is found
                         if len(torrent_rows) < 2:
                             logger.log(u"Data returned from provider does not contain any torrents", logger.DEBUG)
                             continue
@@ -134,7 +132,7 @@ class MoreThanTVProvider(generic.TorrentProvider):
                             cells = result.findChildren('td')
                             link = cells[1].find('a', attrs={'title': 'Download'})
 
-                            #skip if torrent has been nuked due to poor quality
+                            # skip if torrent has been nuked due to poor quality
                             if cells[1].find('img', alt='Nuked') != None:
                                 continue
 
@@ -151,8 +149,9 @@ class MoreThanTVProvider(generic.TorrentProvider):
 
                                 leechers = cells[7].contents[0]
 
-                                #FIXME
                                 size = -1
+                                if re.match(r'\d+([,\.]\d+)?\s*[KkMmGgTt]?[Bb]', cells[4].contents[0]):
+                                    size = self._convertSize(cells[4].text.strip())
 
                             except (AttributeError, TypeError):
                                 continue
@@ -161,14 +160,14 @@ class MoreThanTVProvider(generic.TorrentProvider):
                             if not all([title, download_url]):
                                 continue
 
-                            #Filter unseeded torrent
+                            # Filter unseeded torrent
                             if seeders < self.minseed or leechers < self.minleech:
-                                if mode != 'RSS':
+                                if mode is not 'RSS':
                                     logger.log(u"Discarding torrent because it doesn't meet the minimum seeders or leechers: {0} (S:{1} L:{2})".format(title, seeders, leechers), logger.DEBUG)
                                 continue
 
                             item = title, download_url, size, seeders, leechers
-                            if mode != 'RSS':
+                            if mode is not 'RSS':
                                 logger.log(u"Found result: %s " % title, logger.DEBUG)
 
                             items[mode].append(item)
@@ -176,7 +175,7 @@ class MoreThanTVProvider(generic.TorrentProvider):
                 except Exception, e:
                     logger.log(u"Failed parsing provider. Traceback: %s" % traceback.format_exc(), logger.ERROR)
 
-            #For each search mode sort all the items by seeders if available
+            # For each search mode sort all the items by seeders if available
             items[mode].sort(key=lambda tup: tup[3], reverse=True)
 
             results += items[mode]
@@ -186,6 +185,22 @@ class MoreThanTVProvider(generic.TorrentProvider):
     def seedRatio(self):
         return self.ratio
 
+    def _convertSize(self, sizeString):
+        size = sizeString[:-2].strip()
+        modifier = sizeString[-2:].upper()
+        try:
+            size = float(size)
+            if modifier in 'KB':
+                size = size * 1024
+            elif modifier in 'MB':
+                size = size * 1024**2
+            elif modifier in 'GB':
+                size = size * 1024**3
+            elif modifier in 'TB':
+                size = size * 1024**4
+        except Exception:
+            size = -1
+        return int(size)
 
 class MoreThanTVCache(tvcache.TVCache):
     def __init__(self, provider_obj):

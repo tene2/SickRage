@@ -41,9 +41,9 @@ class NextGenProvider(generic.TorrentProvider):
 
         self.cache = NextGenCache(self)
 
-        self.urls = {'base_url': 'https://nxtgn.info/',
-                     'search': 'https://nxtgn.info/browse.php?search=%s&cat=0&incldead=0&modes=%s',
-                     'login_page': 'https://nxtgn.info/login.php'}
+        self.urls = {'base_url': 'https://nxtgn.biz/',
+                     'search': 'https://nxtgn.biz/browse.php?search=%s&cat=0&incldead=0&modes=%s',
+                     'login_page': 'https://nxtgn.biz/login.php'}
 
         self.url = self.urls['base_url']
 
@@ -56,9 +56,6 @@ class NextGenProvider(generic.TorrentProvider):
         self.minseed = 0
         self.minleech = 0
         self.freeleech = True
-
-    def isEnabled(self):
-        return self.enabled
 
     def getLoginParams(self):
         return {
@@ -83,7 +80,7 @@ class NextGenProvider(generic.TorrentProvider):
                     return True
                 else:
                     self.login_opener = None
-            except:
+            except Exception:
                 self.login_opener = None
 
         if self.login_opener:
@@ -92,6 +89,9 @@ class NextGenProvider(generic.TorrentProvider):
         try:
             login_params = self.getLoginParams()
             data = self.getURL(self.urls['login_page'])
+            if not data:
+                return False
+
             with BS4Parser(data) as bs:
                 csrfraw = bs.find('form', attrs={'id': 'login'})['action']
                 output = self.getURL(self.urls['base_url'] + csrfraw, post_data=login_params)
@@ -102,7 +102,7 @@ class NextGenProvider(generic.TorrentProvider):
                     return True
 
                 error = 'unknown'
-        except:
+        except Exception:
             error = traceback.format_exc()
             self.login_opener = None
 
@@ -122,7 +122,7 @@ class NextGenProvider(generic.TorrentProvider):
             logger.log(u"Search Mode: %s" % mode, logger.DEBUG)
             for search_string in search_params[mode]:
 
-                if mode != 'RSS':
+                if mode is not 'RSS':
                     logger.log(u"Search string: %s " % search_string, logger.DEBUG)
 
                 searchURL = self.urls['search'] % (urllib.quote(search_string.encode('utf-8')), self.categories)
@@ -145,8 +145,8 @@ class NextGenProvider(generic.TorrentProvider):
 
                         entries = entries_std + entries_sticky
 
-                        #Xirg STANDARD TORRENTS
-                        #Continue only if one Release is found
+                        # Xirg STANDARD TORRENTS
+                        # Continue only if one Release is found
                         if not entries:
                             logger.log(u"Data returned from provider does not contain any torrents", logger.DEBUG)
                             continue
@@ -169,14 +169,14 @@ class NextGenProvider(generic.TorrentProvider):
                             if not all([title, download_url]):
                                 continue
 
-                            #Filter unseeded torrent
+                            # Filter unseeded torrent
                             if seeders < self.minseed or leechers < self.minleech:
-                                if mode != 'RSS':
+                                if mode is not 'RSS':
                                     logger.log(u"Discarding torrent because it doesn't meet the minimum seeders or leechers: {0} (S:{1} L:{2})".format(title, seeders, leechers), logger.DEBUG)
                                 continue
 
                             item = title, download_url, size, seeders, leechers
-                            if mode != 'RSS':
+                            if mode is not 'RSS':
                                 logger.log(u"Found result: %s " % title, logger.DEBUG)
 
                             items[mode].append(item)
@@ -184,7 +184,7 @@ class NextGenProvider(generic.TorrentProvider):
                 except Exception, e:
                     logger.log(u"Failed parsing provider. Traceback: %s" % traceback.format_exc(), logger.ERROR)
 
-            #For each search mode sort all the items by seeders if available
+            # For each search mode sort all the items by seeders if available
             items[mode].sort(key=lambda tup: tup[3], reverse=True)
 
             results += items[mode]

@@ -1,3 +1,5 @@
+# coding=utf-8
+
 # Author: Nic Wolfe <nic@wolfeden.ca>
 # URL: http://code.google.com/p/sickbeard/
 #
@@ -16,7 +18,6 @@
 # You should have received a copy of the GNU General Public License
 # along with SickRage.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import with_statement
 
 import os
 import time
@@ -36,12 +37,12 @@ class NameParser(object):
     NORMAL_REGEX = 1
     ANIME_REGEX = 2
 
-    def __init__(self, file_name=True, showObj=None, tryIndexers=False, trySceneExceptions=False, naming_pattern=False):
+    def __init__(self, file_name=True, showObj=None, tryIndexers=False, naming_pattern=False):
 
         self.file_name = file_name
         self.showObj = showObj
         self.tryIndexers = tryIndexers
-        self.trySceneExceptions = trySceneExceptions
+
         self.naming_pattern = naming_pattern
 
         if self.showObj and not self.showObj.is_anime:
@@ -79,7 +80,7 @@ class NameParser(object):
     def _compile_regexes(self, regexMode):
         if regexMode == self.ANIME_REGEX:
             dbg_str = u"ANIME"
-            uncompiled_regex = [regexes.anime_regexes, regexes.normal_regexes]
+            uncompiled_regex = [regexes.anime_regexes]
         elif regexMode == self.NORMAL_REGEX:
             dbg_str = u"NORMAL"
             uncompiled_regex = [regexes.normal_regexes]
@@ -192,7 +193,7 @@ class NameParser(object):
             show = None
             if not self.naming_pattern:
                 # try and create a show object for this result
-                show = helpers.get_show(bestResult.series_name, self.tryIndexers, self.trySceneExceptions)
+                show = helpers.get_show(bestResult.series_name, self.tryIndexers)
 
             # confirm passed in show object indexer id matches result show object indexer id
             if show:
@@ -347,7 +348,7 @@ class NameParser(object):
         b = getattr(second, attr)
 
         # if a is good use it
-        if a != None or (isinstance(a, list) and a):
+        if a is not None or (isinstance(a, list) and a):
             return a
         # if not use b (if b isn't set it'll just be default)
         else:
@@ -460,7 +461,7 @@ class NameParser(object):
                 "Unable to parse " + name.encode(sickbeard.SYS_ENCODING, 'xmlcharrefreplace'))
 
         # if there's no useful info in it then raise an exception
-        if final_result.season_number == None and not final_result.episode_numbers and final_result.air_date == None and not final_result.ab_episode_numbers and not final_result.series_name:
+        if final_result.season_number is None and not final_result.episode_numbers and final_result.air_date is None and not final_result.ab_episode_numbers and not final_result.series_name:
             raise InvalidNameException("Unable to parse " + name.encode(sickbeard.SYS_ENCODING, 'xmlcharrefreplace'))
 
         if cache_result:
@@ -484,7 +485,7 @@ class ParseResult(object):
                  score=None,
                  quality=None,
                  version=None
-                ):
+                 ):
 
         self.original_name = original_name
 
@@ -546,11 +547,11 @@ class ParseResult(object):
         return True
 
     def __str__(self):
-        if self.series_name != None:
+        if self.series_name is not None:
             to_return = self.series_name + u' - '
         else:
             to_return = u''
-        if self.season_number != None:
+        if self.season_number is not None:
             to_return += 'S' + str(self.season_number).zfill(2)
         if self.episode_numbers and len(self.episode_numbers):
             for e in self.episode_numbers:
@@ -596,7 +597,7 @@ class NameParserCache(object):
 
     def get(self, name):
         if name in self._previous_parsed:
-            logger.log("Using cached parse result for: " + name, logger.DEBUG)
+            logger.log(u"Using cached parse result for: " + name, logger.DEBUG)
             return self._previous_parsed[name]
 
 
